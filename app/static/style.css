@@ -1,0 +1,119 @@
+:root {
+  color-scheme: light;
+  --bg: #f7f5f1;
+  --ink: #151414;
+  --muted: #58524b;
+  --accent: #c25f1e;
+  --card: #ffffff;
+  --shadow: 0 20px 45px rgba(0, 0, 0, 0.08);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "IBM Plex Serif", "Georgia", serif;
+  background: radial-gradient(circle at top, #fffaf0, var(--bg));
+  color: var(--ink);
+}
+
+.page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 48px 24px 64px;
+}
+
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-size: 12px;
+  color: var(--accent);
+  margin: 0 0 8px;
+}
+
+h1 {
+  font-size: 40px;
+  margin: 0 0 12px;
+}
+
+.lead {
+  font-size: 18px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.card {
+  background: var(--card);
+  padding: 28px;
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+}
+
+.form {
+  display: grid;
+  gap: 18px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+}
+
+fieldset.field {
+  border: 1px solid #e6e0d6;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+fieldset.field legend {
+  padding: 0 6px;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "IBM Plex Sans", "Helvetica", sans-serif;
+}
+
+input[type="file"],
+textarea {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #e3dfd7;
+  font-family: "IBM Plex Sans", "Helvetica", sans-serif;
+  font-size: 14px;
+}
+
+button {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 999px;
+  font-size: 15px;
+  cursor: pointer;
+  width: fit-content;
+}
+
+button:hover {
+  filter: brightness(0.95);
+}
+
+@media (max-width: 700px) {
+  h1 { font-size: 32px; }
+  .lead { font-size: 16px; }
+}

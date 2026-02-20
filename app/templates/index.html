@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Resume Adjuster</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Local, private resume tailoring</p>
+          <h1>Resume Adjuster</h1>
+          <p class="lead">Upload your resume PDF and paste a job description. The app will make minimal, factual edits and generate a new PDF.</p>
+        </div>
+      </header>
+
+      <section class="card">
+        <form class="form" action="/generate" method="post" enctype="multipart/form-data">
+          <label class="field">
+            <span>Resume PDF</span>
+            <input type="file" name="resume" accept="application/pdf" required />
+          </label>
+
+          <label class="field">
+            <span>Job description</span>
+            <textarea name="job_text" rows="10" placeholder="Paste the job description here" required></textarea>
+          </label>
+
+          <fieldset class="field">
+            <legend>Constraints</legend>
+            <label class="checkbox">
+              <input type="checkbox" name="constraints" value="one_page" />
+              One-page resume
+            </label>
+            <label class="checkbox">
+              <input type="checkbox" name="constraints" value="no_new_facts" checked />
+              Do not add new facts
+            </label>
+            <label class="checkbox">
+              <input type="checkbox" name="constraints" value="preserve_format" checked />
+              Preserve section order and headings
+            </label>
+            <label class="checkbox">
+              <input type="checkbox" name="constraints" value="tight_bullets" />
+              Keep bullets under 2 lines
+            </label>
+            <label class="checkbox">
+              <input type="checkbox" name="constraints" value="quantify_when_present" />
+              Emphasize existing metrics
+            </label>
+          </fieldset>
+
+          <button type="submit">Generate tailored PDF</button>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>
