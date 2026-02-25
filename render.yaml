@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: resume-adjuster
+    env: docker
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: OLLAMA_BASE_URL
+        sync: false
+      - key: OLLAMA_API_KEY
+        sync: false
+      - key: OLLAMA_MODEL
+        value: llama3.1
