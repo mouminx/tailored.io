@@ -59,3 +59,36 @@ Recommended setup:
 - `OLLAMA_MODEL=<a hosted model name available to your account>`
 
 Then deploy to Render using the same Docker/Blueprint flow above.
+
+## Desktop App (Downloadable)
+You can package this project as a local desktop executable for macOS or Windows.
+
+### 1. Install build dependency
+```bash
+pip install -r requirements-desktop.txt
+```
+
+### 2. Build executable
+```bash
+python scripts/build_desktop.py
+```
+
+Output:
+- macOS/Linux: `dist/ResumeAdjuster`
+- Windows: `dist/ResumeAdjuster.exe`
+
+### 3. Run executable
+Before launch, set environment variables if using cloud Ollama:
+
+```bash
+export OLLAMA_BASE_URL=https://ollama.com
+export OLLAMA_API_KEY=<your_api_key>
+export OLLAMA_MODEL=qwen3.5:cloud
+```
+
+Then run the executable. It starts a local server and opens your browser at:
+- `http://127.0.0.1:8765`
+
+### Notes
+- Build on each target OS separately (build mac binary on macOS, Windows exe on Windows).
+- The desktop app still runs locally on the user's machine; only model inference is remote when using cloud Ollama.
