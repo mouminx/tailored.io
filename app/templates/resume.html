@@ -3,6 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <style>
+      @page {
+        margin: 0.5in;
+      }
       :root {
         --text: #111;
         --muted: #444;
@@ -11,7 +14,7 @@
       body {
         font-family: "Times New Roman", Times, serif;
         color: var(--text);
-        margin: 36px 42px;
+        margin: 0;
         font-size: 12.5px;
         line-height: 1.45;
       }
@@ -66,79 +69,68 @@
       <div class="contact">{{ resume.contact | join(" • ") }}</div>
     </header>
 
-    {% if resume.summary %}
-      <section class="summary section">
-        <h2>Summary</h2>
-        <div>{{ resume.summary }}</div>
-      </section>
-    {% endif %}
+    {% for section in render_sections %}
+      <section class="section{% if section.kind == 'summary' %} summary{% endif %}">
+        <h2>{{ section.title }}</h2>
 
-    {% if resume.skills %}
-      <section class="section">
-        <h2>Skills</h2>
-        <div class="skills">
-          {% for skill in resume.skills %}
-            <span>{{ skill }}</span>
+        {% if section.kind == "summary" %}
+          <div>{{ section.data }}</div>
+        {% elif section.kind == "skills" %}
+          <div class="skills">
+            {% for skill in section.data %}
+              <span>{{ skill }}</span>
+            {% endfor %}
+          </div>
+        {% elif section.kind == "experience" %}
+          {% for exp in section.data %}
+            <div class="role">
+              <div>{{ exp.role }} — {{ exp.company }}</div>
+              <div>{{ exp.dates }}</div>
+            </div>
+            <div class="meta">{{ exp.location }}</div>
+            {% if exp.bullets %}
+              <ul>
+                {% for bullet in exp.bullets %}
+                  <li>{{ bullet }}</li>
+                {% endfor %}
+              </ul>
+            {% endif %}
           {% endfor %}
-        </div>
+        {% elif section.kind == "projects" %}
+          {% for project in section.data %}
+            <div class="role">
+              <div>{{ project.name }}</div>
+            </div>
+            {% if project.details %}
+              <ul>
+                {% for detail in project.details %}
+                  <li>{{ detail }}</li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          {% endfor %}
+        {% elif section.kind == "education" %}
+          {% for edu in section.data %}
+            <div class="role">
+              <div>{{ edu.degree }} — {{ edu.school }}</div>
+              <div>{{ edu.dates }}</div>
+            </div>
+            {% if edu.details %}
+              <ul>
+                {% for detail in edu.details %}
+                  <li>{{ detail }}</li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          {% endfor %}
+        {% else %}
+          <ul>
+            {% for item in section.data %}
+              <li>{{ item }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
       </section>
-    {% endif %}
-
-    {% if resume.experience %}
-      <section class="section">
-        <h2>Experience</h2>
-        {% for exp in resume.experience %}
-          <div class="role">
-            <div>{{ exp.role }} — {{ exp.company }}</div>
-            <div>{{ exp.dates }}</div>
-          </div>
-          <div class="meta">{{ exp.location }}</div>
-          {% if exp.bullets %}
-            <ul>
-              {% for bullet in exp.bullets %}
-                <li>{{ bullet }}</li>
-              {% endfor %}
-            </ul>
-          {% endif %}
-        {% endfor %}
-      </section>
-    {% endif %}
-
-    {% if resume.projects %}
-      <section class="section">
-        <h2>Projects</h2>
-        {% for project in resume.projects %}
-          <div class="role">
-            <div>{{ project.name }}</div>
-          </div>
-          {% if project.details %}
-            <ul>
-              {% for detail in project.details %}
-                <li>{{ detail }}</li>
-              {% endfor %}
-            </ul>
-          {% endif %}
-        {% endfor %}
-      </section>
-    {% endif %}
-
-    {% if resume.education %}
-      <section class="section">
-        <h2>Education</h2>
-        {% for edu in resume.education %}
-          <div class="role">
-            <div>{{ edu.degree }} — {{ edu.school }}</div>
-            <div>{{ edu.dates }}</div>
-          </div>
-          {% if edu.details %}
-            <ul>
-              {% for detail in edu.details %}
-                <li>{{ detail }}</li>
-              {% endfor %}
-            </ul>
-          {% endif %}
-        {% endfor %}
-      </section>
-    {% endif %}
+    {% endfor %}
   </body>
 </html>

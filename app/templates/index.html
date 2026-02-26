@@ -4,15 +4,18 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Resume Adjuster</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kirang+Haerang&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css" />
   </head>
   <body>
     <main class="page">
       <header class="hero">
         <div>
-          <p class="eyebrow">Local, private resume tailoring</p>
-          <h1>Resume Adjuster</h1>
-          <p class="lead">Upload your resume PDF and paste a job description. The app will make minimal, factual edits and generate a new PDF.</p>
+          <h1 class="kirang-haerang-regular">tailored.io</h1>
+          <p class="value-prop">Turn one resume into many role-ready versions in minutes.</p>
+          <p class="lead">Upload your resume PDF and paste a job description. The app makes minimal, factual edits, lets you customize section order, and generates a polished ATS-friendly PDF tailored to each role.</p>
         </div>
       </header>
 
@@ -50,11 +53,291 @@
               <input type="checkbox" name="constraints" value="quantify_when_present" />
               Emphasize existing metrics
             </label>
+            <label class="checkbox">
+              <input type="checkbox" name="constraints" value="ats_keywords" />
+              Mirror relevant job keywords (without new facts)
+            </label>
+            <label class="checkbox">
+              <input type="checkbox" name="constraints" value="reverse_chronological" />
+              Keep experience and education reverse-chronological
+            </label>
+            <label class="checkbox">
+              <input type="checkbox" name="constraints" value="action_verbs" />
+              Start bullets with strong action verbs
+            </label>
+            <label class="checkbox">
+              <input type="checkbox" name="constraints" value="consistent_tense" />
+              Keep tense consistent by role recency
+            </label>
+            <label class="checkbox">
+              <input type="checkbox" name="constraints" value="no_first_person" />
+              Avoid first-person pronouns
+            </label>
+          </fieldset>
+
+          <fieldset class="field">
+            <legend>Resume template</legend>
+            <p class="template-help">Build your resume layout visually. Drag section labels into the preview, drag blocks to reorder, edit titles inline, and remove blocks directly. Added labels auto-disable until that section is removed.</p>
+
+            <div class="template-controls">
+              <div id="section-palette" class="section-palette">
+                <button type="button" class="palette-chip" data-key="summary" data-kind="summary" draggable="true">Summary</button>
+                <button type="button" class="palette-chip" data-key="skills" data-kind="skills" draggable="true">Skills</button>
+                <button type="button" class="palette-chip" data-key="experience" data-kind="experience" draggable="true">Experience</button>
+                <button type="button" class="palette-chip" data-key="projects" data-kind="projects" draggable="true">Projects</button>
+                <button type="button" class="palette-chip" data-key="education" data-kind="education" draggable="true">Education</button>
+                <button type="button" class="palette-chip" data-key="certifications" data-kind="custom" draggable="true">Certifications</button>
+                <button type="button" class="palette-chip" data-key="awards" data-kind="custom" draggable="true">Awards</button>
+              </div>
+              <button id="add-section" type="button">+ custom section</button>
+            </div>
+
+            <div class="template-preview-wrap">
+              <p class="template-preview-label">Live template preview</p>
+              <div id="template-preview" class="template-preview"></div>
+            </div>
+
+            <div class="template-tips">
+              <p class="template-tips-title">Resume layout tips</p>
+              <ul>
+                <li>Place <strong>Summary</strong> and <strong>Skills</strong> near the top for faster recruiter scans.</li>
+                <li>Keep <strong>Experience</strong> before Projects for industry roles; swap for project-heavy applications.</li>
+                <li>Use 4-6 sections total to stay focused and one-page friendly.</li>
+              </ul>
+            </div>
+
+            <input id="section-template-json" type="hidden" name="section_template_json" />
           </fieldset>
 
           <button type="submit">Generate tailored PDF</button>
         </form>
       </section>
     </main>
+    <script>
+      (() => {
+        const presetMeta = {
+          summary: { title: "Summary", kind: "summary" },
+          skills: { title: "Skills", kind: "skills" },
+          experience: { title: "Experience", kind: "experience" },
+          projects: { title: "Projects", kind: "projects" },
+          education: { title: "Education", kind: "education" },
+          certifications: { title: "Certifications", kind: "custom" },
+          awards: { title: "Awards", kind: "custom" }
+        };
+
+        let sections = [
+          { key: "summary", title: "Summary", kind: "summary" },
+          { key: "skills", title: "Skills", kind: "skills" },
+          { key: "experience", title: "Experience", kind: "experience" },
+          { key: "projects", title: "Projects", kind: "projects" },
+          { key: "education", title: "Education", kind: "education" }
+        ];
+
+        const previewEl = document.getElementById("template-preview");
+        const hiddenInput = document.getElementById("section-template-json");
+        const addButton = document.getElementById("add-section");
+        const paletteEl = document.getElementById("section-palette");
+        const paletteChips = Array.from(paletteEl.querySelectorAll(".palette-chip"));
+
+        function normalizeKey(text) {
+          return text.trim().toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+        }
+
+        function syncHiddenInput() {
+          hiddenInput.value = JSON.stringify(sections);
+        }
+
+        function removeSection(index) {
+          sections.splice(index, 1);
+          render();
+        }
+
+        function addSectionFromPreset(selected) {
+          let item;
+          const meta = presetMeta[selected];
+          if (!meta) return;
+          item = { key: selected, title: meta.title, kind: meta.kind };
+
+          if (sections.some((section) => section.key === item.key)) {
+            return;
+          }
+          sections.push(item);
+          render();
+        }
+
+        function addCustomSection() {
+          const customTitle = window.prompt("Custom section title:");
+          if (!customTitle) return;
+          const customKey = normalizeKey(customTitle);
+          if (!customKey) return;
+          const item = { key: customKey, title: customTitle.trim(), kind: "custom" };
+          if (sections.some((section) => section.key === item.key)) {
+            window.alert("That section already exists in the template.");
+            return;
+          }
+          sections.push(item);
+          render();
+        }
+
+        function render() {
+          syncHiddenInput();
+          syncPalette();
+          renderPreview();
+        }
+
+        function syncPalette() {
+          paletteChips.forEach((chip) => {
+            const exists = sections.some((section) => section.key === chip.dataset.key);
+            chip.disabled = exists;
+            chip.draggable = !exists;
+            chip.classList.toggle("is-disabled", exists);
+            chip.setAttribute("aria-disabled", String(exists));
+          });
+        }
+
+        function renderPreview() {
+          previewEl.innerHTML = "";
+          let dragIndex = null;
+
+          const sheet = document.createElement("div");
+          sheet.className = "resume-sheet";
+          sheet.addEventListener("dragover", (event) => {
+            if (event.dataTransfer.types.includes("preset-section")) {
+              event.preventDefault();
+              sheet.classList.add("sheet-drop-target");
+            }
+          });
+          sheet.addEventListener("dragleave", () => {
+            sheet.classList.remove("sheet-drop-target");
+          });
+          sheet.addEventListener("drop", (event) => {
+            if (!event.dataTransfer.types.includes("preset-section")) return;
+            event.preventDefault();
+            sheet.classList.remove("sheet-drop-target");
+            const selected = event.dataTransfer.getData("preset-section");
+            addSectionFromPreset(selected);
+          });
+
+          const mockHeader = document.createElement("div");
+          mockHeader.className = "mock-header";
+          mockHeader.innerHTML = "<div class='mock-name'></div><div class='mock-contact'></div>";
+          sheet.appendChild(mockHeader);
+
+          if (!sections.length) {
+            const empty = document.createElement("div");
+            empty.className = "mock-empty";
+            empty.textContent = "Add sections to preview your resume layout.";
+            sheet.appendChild(empty);
+            previewEl.appendChild(sheet);
+            return;
+          }
+
+          sections.forEach((section, index) => {
+            const block = document.createElement("div");
+            block.className = `mock-section mock-${section.kind}`;
+            block.draggable = true;
+
+            block.addEventListener("dragstart", (event) => {
+              dragIndex = index;
+              block.classList.add("dragging");
+              event.dataTransfer.effectAllowed = "move";
+              event.dataTransfer.setData("text/plain", String(index));
+            });
+
+            block.addEventListener("dragend", () => {
+              block.classList.remove("dragging");
+            });
+
+            block.addEventListener("dragover", (event) => {
+              event.preventDefault();
+              block.classList.add("drag-target");
+            });
+
+            block.addEventListener("dragleave", () => {
+              block.classList.remove("drag-target");
+            });
+
+            block.addEventListener("drop", (event) => {
+              event.preventDefault();
+              block.classList.remove("drag-target");
+              const source = dragIndex;
+              const target = index;
+              if (source === null || source === target) return;
+              const copy = [...sections];
+              const [moved] = copy.splice(source, 1);
+              copy.splice(target, 0, moved);
+              sections = copy;
+              render();
+            });
+
+            const top = document.createElement("div");
+            top.className = "mock-section-top";
+
+            const handle = document.createElement("span");
+            handle.className = "drag-handle";
+            handle.textContent = "⋮⋮";
+            top.appendChild(handle);
+
+            const title = document.createElement("input");
+            title.className = "mock-section-title";
+            title.value = section.title;
+            title.type = "text";
+            title.setAttribute("aria-label", "Section title");
+            title.addEventListener("input", (event) => {
+              const value = event.target.value.trim();
+              sections[index].title = value || section.title;
+              syncHiddenInput();
+            });
+            top.appendChild(title);
+
+            const remove = document.createElement("button");
+            remove.type = "button";
+            remove.className = "mock-remove";
+            remove.textContent = "Remove";
+            remove.addEventListener("click", () => removeSection(index));
+            top.appendChild(remove);
+
+            block.appendChild(top);
+
+            const lines = document.createElement("div");
+            lines.className = "mock-lines";
+
+            const lineCountByKind = {
+              summary: 3,
+              skills: 2,
+              experience: 5,
+              projects: 4,
+              education: 3,
+              custom: 3
+            };
+            const count = lineCountByKind[section.kind] || 3;
+            for (let i = 0; i < count; i += 1) {
+              const line = document.createElement("div");
+              line.className = "mock-line";
+              lines.appendChild(line);
+            }
+            block.appendChild(lines);
+            sheet.appendChild(block);
+          });
+
+          previewEl.appendChild(sheet);
+        }
+
+        paletteEl.querySelectorAll(".palette-chip").forEach((chip) => {
+          chip.addEventListener("click", () => addSectionFromPreset(chip.dataset.key));
+          chip.addEventListener("dragstart", (event) => {
+            if (chip.disabled) {
+              event.preventDefault();
+              return;
+            }
+            event.dataTransfer.effectAllowed = "copy";
+            event.dataTransfer.setData("preset-section", chip.dataset.key);
+          });
+        });
+
+        addButton.addEventListener("click", addCustomSection);
+        render();
+      })();
+    </script>
   </body>
 </html>
