@@ -12,8 +12,8 @@
   <body>
     <main class="page">
       <header class="hero">
-        <div>
-          <h1 class="kirang-haerang-regular">tailored.io</h1>
+        <div class="hero-content">
+          <img class="site-logo" src="/static/logo.png" alt="tailored.io logo" />
           <p class="value-prop">Turn one resume into many role-ready versions in minutes.</p>
           <p class="lead">Upload your resume PDF and paste a job description. The app makes minimal, factual edits, lets you customize section order, and generates a polished ATS-friendly PDF tailored to each role.</p>
         </div>
@@ -29,6 +29,18 @@
           <label class="field">
             <span>Job description</span>
             <textarea name="job_text" rows="10" placeholder="Paste the job description here" required></textarea>
+            <div class="job-tools">
+              <button id="process-job-btn" class="generate-btn process-btn" type="button" data-mode="idle">
+                <span class="btn-label">Process description</span>
+                <span class="btn-loading">
+                  <span class="spinner-arc" aria-hidden="true"></span>
+                  <span>Processing description...</span>
+                </span>
+              </button>
+              <span id="process-job-status" class="process-job-status"></span>
+            </div>
+            <textarea id="job-compact-preview" rows="5" placeholder="Processed job description preview will appear here" readonly></textarea>
+            <input id="job-text-compacted" type="hidden" name="job_text_compacted" />
           </label>
 
           <fieldset class="field">
@@ -51,7 +63,7 @@
             </label>
             <label class="checkbox">
               <input type="checkbox" name="constraints" value="quantify_when_present" />
-              Emphasize existing metrics
+              Emphasize existing metrics (strong)
             </label>
             <label class="checkbox">
               <input type="checkbox" name="constraints" value="ats_keywords" />
@@ -72,6 +84,10 @@
             <label class="checkbox">
               <input type="checkbox" name="constraints" value="no_first_person" />
               Avoid first-person pronouns
+            </label>
+            <label class="checkbox">
+              <input type="checkbox" name="constraints" value="stronger_impact_language" />
+              Stronger impact language
             </label>
           </fieldset>
 
@@ -109,7 +125,92 @@
             <input id="section-template-json" type="hidden" name="section_template_json" />
           </fieldset>
 
-          <button type="submit">Generate tailored PDF</button>
+          <fieldset class="field">
+            <legend>PDF style</legend>
+            <p class="template-help">Choose how the final PDF should look. Tap one option per row.</p>
+            <div class="style-groups">
+              <div class="style-group" data-field="visual_font">
+                <span class="style-group-label">Body font</span>
+                <div class="style-chip-row">
+                  <button type="button" class="style-chip is-active" data-field="visual_font" data-value="serif">Serif</button>
+                  <button type="button" class="style-chip" data-field="visual_font" data-value="sans_serif">Sans-serif</button>
+                </div>
+              </div>
+              <div class="style-group" data-field="visual_density">
+                <span class="style-group-label">Spacing density</span>
+                <div class="style-chip-row">
+                  <button type="button" class="style-chip" data-field="visual_density" data-value="compact">Compact</button>
+                  <button type="button" class="style-chip is-active" data-field="visual_density" data-value="standard">Standard</button>
+                  <button type="button" class="style-chip" data-field="visual_density" data-value="spacious">Spacious</button>
+                </div>
+              </div>
+              <div class="style-group" data-field="visual_tone">
+                <span class="style-group-label">Visual tone</span>
+                <div class="style-chip-row">
+                  <button type="button" class="style-chip is-active" data-field="visual_tone" data-value="classic">Classic</button>
+                  <button type="button" class="style-chip" data-field="visual_tone" data-value="modern">Modern accent</button>
+                  <button type="button" class="style-chip" data-field="visual_tone" data-value="minimal">Minimal grayscale</button>
+                </div>
+              </div>
+              <div class="style-group" data-field="visual_heading_style">
+                <span class="style-group-label">Heading style</span>
+                <div class="style-chip-row">
+                  <button type="button" class="style-chip is-active" data-field="visual_heading_style" data-value="uppercase">Uppercase</button>
+                  <button type="button" class="style-chip" data-field="visual_heading_style" data-value="title_case">Title Case</button>
+                </div>
+              </div>
+              <div class="style-group" data-field="visual_bullet_style">
+                <span class="style-group-label">Bullet style</span>
+                <div class="style-chip-row">
+                  <button type="button" class="style-chip is-active" data-field="visual_bullet_style" data-value="dot">Dot</button>
+                  <button type="button" class="style-chip" data-field="visual_bullet_style" data-value="dash">Dash</button>
+                  <button type="button" class="style-chip" data-field="visual_bullet_style" data-value="none">None</button>
+                </div>
+              </div>
+              <div class="style-group" data-field="visual_skills_display">
+                <span class="style-group-label">Skills display</span>
+                <div class="style-chip-row">
+                  <button type="button" class="style-chip is-active" data-field="visual_skills_display" data-value="chips">Chips</button>
+                  <button type="button" class="style-chip" data-field="visual_skills_display" data-value="inline">Inline list</button>
+                </div>
+              </div>
+              <div class="style-group" data-field="visual_section_divider">
+                <span class="style-group-label">Section divider</span>
+                <div class="style-chip-row">
+                  <button type="button" class="style-chip is-active" data-field="visual_section_divider" data-value="none">None</button>
+                  <button type="button" class="style-chip" data-field="visual_section_divider" data-value="subtle">Subtle</button>
+                  <button type="button" class="style-chip" data-field="visual_section_divider" data-value="bold">Bold</button>
+                </div>
+              </div>
+              <div class="style-group" data-field="visual_page_margin">
+                <span class="style-group-label">Page margin</span>
+                <div class="style-chip-row">
+                  <button type="button" class="style-chip" data-field="visual_page_margin" data-value="0_25">0.25&quot;</button>
+                  <button type="button" class="style-chip is-active" data-field="visual_page_margin" data-value="0_5">0.5&quot;</button>
+                  <button type="button" class="style-chip" data-field="visual_page_margin" data-value="0_75">0.75&quot;</button>
+                </div>
+              </div>
+            </div>
+            <input type="hidden" id="visual_font" name="visual_font" value="serif" />
+            <input type="hidden" id="visual_density" name="visual_density" value="standard" />
+            <input type="hidden" id="visual_tone" name="visual_tone" value="classic" />
+            <input type="hidden" id="visual_heading_style" name="visual_heading_style" value="uppercase" />
+            <input type="hidden" id="visual_bullet_style" name="visual_bullet_style" value="dot" />
+            <input type="hidden" id="visual_skills_display" name="visual_skills_display" value="chips" />
+            <input type="hidden" id="visual_section_divider" name="visual_section_divider" value="none" />
+            <input type="hidden" id="visual_page_margin" name="visual_page_margin" value="0_5" />
+          </fieldset>
+
+          <div class="generate-actions">
+            <button id="generate-btn" class="generate-btn" type="submit" data-mode="generate">
+              <span class="btn-label">Generate tailored resume</span>
+              <span class="btn-loading">
+                <span class="spinner-arc" aria-hidden="true"></span>
+                <span>Generating tailored resume...</span>
+              </span>
+            </button>
+            <div id="generate-status" class="generate-status"></div>
+          </div>
         </form>
       </section>
     </main>
@@ -136,8 +237,56 @@
         const previewEl = document.getElementById("template-preview");
         const hiddenInput = document.getElementById("section-template-json");
         const addButton = document.getElementById("add-section");
+        const formEl = document.querySelector("form.form");
+        const generateBtn = document.getElementById("generate-btn");
+        const generateBtnLabel = generateBtn.querySelector(".btn-label");
+        const generateBtnLoading = generateBtn.querySelector(".btn-loading");
+        const generateStatusEl = document.getElementById("generate-status");
+        const processJobBtn = document.getElementById("process-job-btn");
+        const processJobBtnLabel = processJobBtn.querySelector(".btn-label");
+        const processJobBtnLoading = processJobBtn.querySelector(".btn-loading");
+        const processJobStatus = document.getElementById("process-job-status");
+        const jobTextEl = document.querySelector("textarea[name='job_text']");
+        const jobCompactPreviewEl = document.getElementById("job-compact-preview");
+        const jobCompactedInput = document.getElementById("job-text-compacted");
         const paletteEl = document.getElementById("section-palette");
         const paletteChips = Array.from(paletteEl.querySelectorAll(".palette-chip"));
+        const styleChips = Array.from(document.querySelectorAll(".style-chip"));
+        let downloadUrl = "";
+
+        function setGenerateMode(mode) {
+          generateBtn.dataset.mode = mode;
+          generateBtn.classList.toggle("is-loading", mode === "loading");
+          generateBtn.classList.toggle("is-ready", mode === "ready");
+          generateBtn.classList.toggle("is-generate", mode === "generate");
+          if (mode === "loading") {
+            generateBtnLabel.textContent = "Generate tailored resume";
+            generateBtnLoading.style.display = "inline-flex";
+            generateBtn.disabled = true;
+          } else if (mode === "ready") {
+            generateBtnLabel.textContent = "Download tailored resume";
+            generateBtnLoading.style.display = "none";
+            generateBtn.disabled = false;
+          } else {
+            generateBtnLabel.textContent = "Generate tailored resume";
+            generateBtnLoading.style.display = "none";
+            generateBtn.disabled = false;
+          }
+        }
+
+        function setProcessMode(mode) {
+          processJobBtn.dataset.mode = mode;
+          processJobBtn.classList.toggle("is-loading", mode === "loading");
+          if (mode === "loading") {
+            processJobBtnLabel.textContent = "Process description";
+            processJobBtnLoading.style.display = "inline-flex";
+            processJobBtn.disabled = true;
+          } else {
+            processJobBtnLabel.textContent = "Process description";
+            processJobBtnLoading.style.display = "none";
+            processJobBtn.disabled = false;
+          }
+        }
 
         function normalizeKey(text) {
           return text.trim().toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
@@ -153,14 +302,10 @@
         }
 
         function addSectionFromPreset(selected) {
-          let item;
           const meta = presetMeta[selected];
           if (!meta) return;
-          item = { key: selected, title: meta.title, kind: meta.kind };
-
-          if (sections.some((section) => section.key === item.key)) {
-            return;
-          }
+          const item = { key: selected, title: meta.title, kind: meta.kind };
+          if (sections.some((section) => section.key === item.key)) return;
           sections.push(item);
           render();
         }
@@ -177,12 +322,6 @@
           }
           sections.push(item);
           render();
-        }
-
-        function render() {
-          syncHiddenInput();
-          syncPalette();
-          renderPreview();
         }
 
         function syncPalette() {
@@ -301,7 +440,6 @@
 
             const lines = document.createElement("div");
             lines.className = "mock-lines";
-
             const lineCountByKind = {
               summary: 3,
               skills: 2,
@@ -323,7 +461,13 @@
           previewEl.appendChild(sheet);
         }
 
-        paletteEl.querySelectorAll(".palette-chip").forEach((chip) => {
+        function render() {
+          syncHiddenInput();
+          syncPalette();
+          renderPreview();
+        }
+
+        paletteChips.forEach((chip) => {
           chip.addEventListener("click", () => addSectionFromPreset(chip.dataset.key));
           chip.addEventListener("dragstart", (event) => {
             if (chip.disabled) {
@@ -335,7 +479,95 @@
           });
         });
 
+        styleChips.forEach((chip) => {
+          chip.addEventListener("click", () => {
+            const field = chip.dataset.field;
+            const value = chip.dataset.value;
+            if (!field || !value) return;
+            const hidden = document.getElementById(field);
+            if (!hidden) return;
+            hidden.value = value;
+            styleChips
+              .filter((item) => item.dataset.field === field)
+              .forEach((item) => item.classList.remove("is-active"));
+            chip.classList.add("is-active");
+          });
+        });
+
         addButton.addEventListener("click", addCustomSection);
+
+        processJobBtn.addEventListener("click", async () => {
+          const rawJob = (jobTextEl.value || "").trim();
+          if (!rawJob) {
+            processJobStatus.textContent = "Paste a job description first.";
+            return;
+          }
+          setProcessMode("loading");
+          processJobStatus.textContent = "Processing...";
+          try {
+            const form = new FormData();
+            form.append("job_text", rawJob);
+            const response = await fetch("/process-job", {
+              method: "POST",
+              body: form
+            });
+            if (!response.ok) throw new Error("processing failed");
+            const data = await response.json();
+            const compacted = (data.compressed_job || "").trim();
+            jobCompactedInput.value = compacted;
+            jobCompactPreviewEl.value = compacted;
+            processJobStatus.textContent = "Processed and ready.";
+          } catch (_error) {
+            processJobStatus.textContent = "Could not process. Will use original description.";
+            jobCompactedInput.value = "";
+          } finally {
+            setProcessMode("idle");
+          }
+        });
+
+        jobTextEl.addEventListener("input", () => {
+          jobCompactedInput.value = "";
+          jobCompactPreviewEl.value = "";
+          processJobStatus.textContent = "";
+        });
+
+        formEl.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          if (generateBtn.dataset.mode === "ready" && downloadUrl) {
+            const anchor = document.createElement("a");
+            anchor.href = downloadUrl;
+            anchor.download = "tailored_resume.pdf";
+            anchor.click();
+            return;
+          }
+          generateStatusEl.textContent = "";
+          if (downloadUrl) {
+            URL.revokeObjectURL(downloadUrl);
+            downloadUrl = "";
+          }
+          setGenerateMode("loading");
+
+          try {
+            const formData = new FormData(formEl);
+            const response = await fetch("/generate", {
+              method: "POST",
+              body: formData
+            });
+            if (!response.ok) {
+              throw new Error(`generation failed (${response.status})`);
+            }
+            const blob = await response.blob();
+            downloadUrl = URL.createObjectURL(blob);
+            setGenerateMode("ready");
+            generateStatusEl.textContent = "Resume ready to download.";
+          } catch (_error) {
+            setGenerateMode("generate");
+            generateStatusEl.textContent = "Could not generate PDF. Please try again.";
+          }
+        });
+
+        setGenerateMode("generate");
+        setProcessMode("idle");
         render();
       })();
     </script>

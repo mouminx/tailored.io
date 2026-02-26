@@ -6,14 +6,14 @@ import sys
 import json
 from pathlib import Path
 from fastapi import FastAPI, File, Form, Request, UploadFile
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from weasyprint import HTML
 
 from app.models import Resume, TemplateSection
 from app.services.pdf import extract_text_from_pdf
-from app.services.pipeline import generate_resume
+from app.services.pipeline import compact_job_description, generate_resume
 
 
 def _resource_dir() -> Path:
@@ -39,6 +39,17 @@ PRESET_SECTIONS = [
     TemplateSection(key="projects", title="Projects", kind="projects"),
     TemplateSection(key="education", title="Education", kind="education"),
 ]
+
+DEFAULT_VISUAL_OPTIONS = {
+    "font": "serif",
+    "density": "standard",
+    "tone": "classic",
+    "heading_style": "uppercase",
+    "bullet_style": "dot",
+    "skills_display": "chips",
+    "section_divider": "none",
+    "page_margin": "0_5",
+}
 
 
 def parse_template_sections(section_template_json: str | None) -> list[TemplateSection]:
@@ -67,6 +78,63 @@ def parse_template_sections(section_template_json: str | None) -> list[TemplateS
         sections.append(TemplateSection(key=key, title=title or key.title(), kind=kind))
 
     return sections or PRESET_SECTIONS
+
+
+def parse_visual_options(
+    visual_font: str | None,
+    visual_density: str | None,
+    visual_tone: str | None,
+    visual_heading_style: str | None,
+    visual_bullet_style: str | None,
+    visual_skills_display: str | None,
+    visual_section_divider: str | None,
+    visual_page_margin: str | None,
+) -> dict[str, str]:
+    font = (visual_font or DEFAULT_VISUAL_OPTIONS["font"]).strip().lower()
+    density = (visual_density or DEFAULT_VISUAL_OPTIONS["density"]).strip().lower()
+    tone = (visual_tone or DEFAULT_VISUAL_OPTIONS["tone"]).strip().lower()
+    heading_style = (
+        visual_heading_style or DEFAULT_VISUAL_OPTIONS["heading_style"]
+    ).strip().lower()
+    bullet_style = (
+        visual_bullet_style or DEFAULT_VISUAL_OPTIONS["bullet_style"]
+    ).strip().lower()
+    skills_display = (
+        visual_skills_display or DEFAULT_VISUAL_OPTIONS["skills_display"]
+    ).strip().lower()
+    section_divider = (
+        visual_section_divider or DEFAULT_VISUAL_OPTIONS["section_divider"]
+    ).strip().lower()
+    page_margin = (
+        visual_page_margin or DEFAULT_VISUAL_OPTIONS["page_margin"]
+    ).strip().lower()
+
+    if font not in {"serif", "sans_serif"}:
+        font = DEFAULT_VISUAL_OPTIONS["font"]
+    if density not in {"compact", "standard", "spacious"}:
+        density = DEFAULT_VISUAL_OPTIONS["density"]
+    if tone not in {"classic", "modern", "minimal"}:
+        tone = DEFAULT_VISUAL_OPTIONS["tone"]
+    if heading_style not in {"uppercase", "title_case"}:
+        heading_style = DEFAULT_VISUAL_OPTIONS["heading_style"]
+    if bullet_style not in {"dot", "dash", "none"}:
+        bullet_style = DEFAULT_VISUAL_OPTIONS["bullet_style"]
+    if skills_display not in {"chips", "inline"}:
+        skills_display = DEFAULT_VISUAL_OPTIONS["skills_display"]
+    if section_divider not in {"none", "subtle", "bold"}:
+        section_divider = DEFAULT_VISUAL_OPTIONS["section_divider"]
+    if page_margin not in {"0_25", "0_5", "0_75"}:
+        page_margin = DEFAULT_VISUAL_OPTIONS["page_margin"]
+    return {
+        "font": font,
+        "density": density,
+        "tone": tone,
+        "heading_style": heading_style,
+        "bullet_style": bullet_style,
+        "skills_display": skills_display,
+        "section_divider": section_divider,
+        "page_margin": page_margin,
+    }
 
 
 def build_render_sections(
@@ -103,24 +171,57 @@ async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 
+@app.post("/process-job")
+async def process_job_description(job_text: str = Form(...)):
+    result = compact_job_description(job_text)
+    return JSONResponse(result)
+
+
 @app.post("/generate")
 async def generate_resume_pdf(
     request: Request,
     resume: UploadFile = File(...),
     job_text: str = Form(...),
+    job_text_compacted: str | None = Form(default=None),
     constraints: list[str] | None = Form(default=None),
     section_template_json: str | None = Form(default=None),
+    visual_font: str | None = Form(default=None),
+    visual_density: str | None = Form(default=None),
+    visual_tone: str | None = Form(default=None),
+    visual_heading_style: str | None = Form(default=None),
+    visual_bullet_style: str | None = Form(default=None),
+    visual_skills_display: str | None = Form(default=None),
+    visual_section_divider: str | None = Form(default=None),
+    visual_page_margin: str | None = Form(default=None),
 ):
     pdf_bytes = await resume.read()
     resume_text = extract_text_from_pdf(pdf_bytes)
     template_sections = parse_template_sections(section_template_json)
+    visual_options = parse_visual_options(
+        visual_font,
+        visual_density,
+        visual_tone,
+        visual_heading_style,
+        visual_bullet_style,
+        visual_skills_display,
+        visual_section_divider,
+        visual_page_margin,
+    )
 
     tailored_resume = generate_resume(
-        resume_text, job_text, constraints or [], template_sections
+        resume_text,
+        job_text,
+        constraints or [],
+        template_sections,
+        job_text_compacted,
     )
     render_sections = build_render_sections(tailored_resume, template_sections)
     html = templates.get_template("resume.html").render(
-        {"resume": tailored_resume, "render_sections": render_sections}
+        {
+            "resume": tailored_resume,
+            "render_sections": render_sections,
+            "visual": visual_options,
+        }
     )
 
     pdf = HTML(string=html).write_pdf()

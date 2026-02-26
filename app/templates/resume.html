@@ -3,42 +3,97 @@
   <head>
     <meta charset="utf-8" />
     <style>
+      {% set density = visual.density if visual else "standard" %}
+      {% set tone = visual.tone if visual else "classic" %}
+      {% set heading_style = visual.heading_style if visual else "uppercase" %}
+      {% set bullet_style = visual.bullet_style if visual else "dot" %}
+      {% set skills_display = visual.skills_display if visual else "chips" %}
+      {% set section_divider = visual.section_divider if visual else "none" %}
+      {% set page_margin = visual.page_margin if visual else "0_5" %}
       @page {
+        {% if page_margin == "0_25" %}
+        margin: 0.25in;
+        {% elif page_margin == "0_75" %}
+        margin: 0.75in;
+        {% else %}
         margin: 0.5in;
+        {% endif %}
       }
       :root {
+        {% if tone == "modern" %}
+        --text: #1f1a15;
+        --muted: #6f5848;
+        --heading: #c2410c;
+        --chip-bg: #fff0e4;
+        {% elif tone == "minimal" %}
+        --text: #1a1a1a;
+        --muted: #5e5e5e;
+        --heading: #3f3f3f;
+        --chip-bg: #f1f1f1;
+        {% else %}
         --text: #111;
         --muted: #444;
+        --heading: #444;
+        --chip-bg: #f3f3f3;
+        {% endif %}
       }
       * { box-sizing: border-box; }
       body {
+        {% if visual and visual.font == "sans_serif" %}
+        font-family: "Helvetica Neue", Arial, "Liberation Sans", sans-serif;
+        {% else %}
         font-family: "Times New Roman", Times, serif;
+        {% endif %}
         color: var(--text);
         margin: 0;
+        {% if density == "compact" %}
+        font-size: 11.5px;
+        line-height: 1.32;
+        {% elif density == "spacious" %}
+        font-size: 12.8px;
+        line-height: 1.52;
+        {% else %}
         font-size: 12.5px;
         line-height: 1.45;
+        {% endif %}
       }
       h1 { font-size: 22px; margin: 0; }
       h2 {
         font-size: 12px;
+        {% if heading_style == "uppercase" %}
         text-transform: uppercase;
+        {% else %}
+        text-transform: none;
+        {% endif %}
         letter-spacing: 0.08em;
+        {% if density == "compact" %}
+        margin: 12px 0 5px;
+        {% elif density == "spacious" %}
+        margin: 20px 0 7px;
+        {% else %}
         margin: 18px 0 6px;
-        color: var(--muted);
+        {% endif %}
+        color: var(--heading);
       }
       .contact {
         margin-top: 4px;
         color: var(--muted);
         font-size: 11.5px;
       }
-      .summary { margin-top: 10px; }
+      .summary {
+        {% if density == "compact" %}
+        margin-top: 8px;
+        {% else %}
+        margin-top: 10px;
+        {% endif %}
+      }
       .skills {
         display: flex;
         flex-wrap: wrap;
         gap: 6px 12px;
       }
       .skills span {
-        background: #f3f3f3;
+        background: var(--chip-bg);
         padding: 3px 6px;
         border-radius: 4px;
         font-size: 11px;
@@ -56,11 +111,63 @@
         margin-bottom: 6px;
       }
       ul {
+        {% if density == "compact" %}
+        margin: 0 0 7px 15px;
+        {% elif density == "spacious" %}
+        margin: 0 0 12px 17px;
+        {% else %}
         margin: 0 0 10px 16px;
+        {% endif %}
         padding: 0;
       }
-      li { margin-bottom: 4px; }
-      .section { margin-bottom: 12px; }
+      {% if bullet_style == "dash" %}
+      ul {
+        list-style: none;
+        margin-left: 0;
+      }
+      li::before {
+        content: "- ";
+      }
+      {% elif bullet_style == "none" %}
+      ul {
+        list-style: none;
+        margin-left: 0;
+      }
+      li::before {
+        content: "";
+      }
+      {% endif %}
+      li {
+        {% if density == "compact" %}
+        margin-bottom: 2px;
+        {% elif density == "spacious" %}
+        margin-bottom: 5px;
+        {% else %}
+        margin-bottom: 4px;
+        {% endif %}
+      }
+      .section {
+        {% if density == "compact" %}
+        margin-bottom: 8px;
+        {% elif density == "spacious" %}
+        margin-bottom: 14px;
+        {% else %}
+        margin-bottom: 12px;
+        {% endif %}
+      }
+      {% if section_divider == "subtle" %}
+      .section {
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 8px;
+      }
+      .section:last-of-type { border-bottom: none; }
+      {% elif section_divider == "bold" %}
+      .section {
+        border-bottom: 2px solid #bdbdbd;
+        padding-bottom: 8px;
+      }
+      .section:last-of-type { border-bottom: none; }
+      {% endif %}
     </style>
   </head>
   <body>
@@ -76,11 +183,15 @@
         {% if section.kind == "summary" %}
           <div>{{ section.data }}</div>
         {% elif section.kind == "skills" %}
-          <div class="skills">
-            {% for skill in section.data %}
-              <span>{{ skill }}</span>
-            {% endfor %}
-          </div>
+          {% if skills_display == "inline" %}
+            <div>{{ section.data | join(", ") }}</div>
+          {% else %}
+            <div class="skills">
+              {% for skill in section.data %}
+                <span>{{ skill }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
         {% elif section.kind == "experience" %}
           {% for exp in section.data %}
             <div class="role">
